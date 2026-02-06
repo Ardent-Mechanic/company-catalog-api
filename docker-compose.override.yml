@@ -1,0 +1,38 @@
+services:
+  api:
+    volumes:
+      - ./app:/app/app
+    command: uvicorn app.main:app --reload
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+    networks:
+      - company_catalog
+    depends_on:
+      - pgsql
+
+  pgsql:
+    image: postgres:14.7-alpine
+    command: [ "postgres", "-c", "max_connections=500" ]
+    volumes:
+      - ./tools/pgsql/service_folders/data/:/var/lib/postgresql/data
+    env_file:
+      - .env
+    networks:
+      - company_catalog
+
+  pgadmin:
+    image: dpage/pgadmin4:7
+    env_file:
+      - .env
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    networks:
+      - company_catalog
+    depends_on:
+      - pgsql
+
+networks:
+  company_catalog:
+    driver: bridge
