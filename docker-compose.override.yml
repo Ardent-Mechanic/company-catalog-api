@@ -2,12 +2,14 @@ services:
   api:
     volumes:
       - ./app:/app/app
-    command: uvicorn app.main:app --reload
+    command: pipenv run uvicorn app.main:app --host 0.0.0.0 --port 8000  --reload
+    env_file:
+      - .env
     ports:
       - "8000:8000"
     restart: unless-stopped
     networks:
-      - company_catalog
+      - catalog_service_network
     depends_on:
       - pgsql
 
@@ -19,7 +21,7 @@ services:
     env_file:
       - .env
     networks:
-      - company_catalog
+      - catalog_service_network
 
   pgadmin:
     image: dpage/pgadmin4:7
@@ -29,10 +31,10 @@ services:
       - "5050:80"
     restart: unless-stopped
     networks:
-      - company_catalog
+      - catalog_service_network
     depends_on:
       - pgsql
 
 networks:
-  company_catalog:
+  catalog_service_network:
     driver: bridge

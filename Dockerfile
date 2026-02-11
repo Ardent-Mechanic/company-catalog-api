@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.12-slim
 
 # Не пишем .pyc и сразу выводим логи
 ENV PYTHONDONTWRITEBYTECODE=1
@@ -22,7 +22,9 @@ RUN pipenv install --system --deploy --ignore-pipfile \
 
 # Код приложения
 COPY app ./app
+COPY .env .
+COPY logging.conf .
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["sh", "-c", "pipenv run uvicorn app.main:app --host 0.0.0.0 --port 8000"]
