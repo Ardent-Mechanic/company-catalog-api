@@ -10,10 +10,12 @@ sqlalchemy = {extras = ["asyncio"], version = "*"}
 asyncpg = "*"
 alembic = "*"
 uvicorn = "*"
+pydantic-settings = "*"
 
 [dev-packages]
 pre-commit = "*"
 commitizen = "*"
+black = "*"
 
 [requires]
 python_version = "3.12"
