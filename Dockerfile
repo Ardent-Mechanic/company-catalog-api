@@ -17,11 +17,19 @@ RUN pip install --no-cache-dir --upgrade pip pipenv
 
 # Сначала зависимости (для кеширования слоёв)
 COPY Pipfile Pipfile.lock ./
-RUN pipenv install --system --deploy --ignore-pipfile \
-    && pip cache purge
+
+ARG INSTALL_DEV=false
+RUN if [ "$INSTALL_DEV" = "true" ]; then \
+            pipenv install --system --deploy --ignore-pipfile --dev; \
+        else \
+            pipenv install --system --deploy --ignore-pipfile; \
+        fi \
+        && pip cache purge
 
 # Код приложения
 COPY app ./app
+COPY migrations .
+COPY alembic.ini .
 COPY .env .
 COPY logging.conf .
 
