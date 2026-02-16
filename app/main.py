@@ -7,7 +7,7 @@ from .core.config import settings
 from .core.db import db_session
 from .core.logging import setup_logging
 
-# from .api import router as api_router
+from .api import router as api_router
 
 
 @asynccontextmanager
@@ -24,7 +24,7 @@ app = FastAPI(
     log_level="info",
 )
 
-# app.include_router(api_router)
+app.include_router(api_router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host=settings.run.host, port=settings.run.port, reload=True)
