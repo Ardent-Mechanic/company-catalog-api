@@ -1,10 +1,9 @@
 from typing import Optional
 
 from fastapi import Depends
-from sqlalchemy.orm import Session
 from app.core.db.session import db_session
 from app.core.repositories.organization import OrganizationRepository
-from app.core.schemas import OrganizationOut, OrganizationFilter
+from app.core.schemas import OrganizationOut, CombineOrgFilterPagination
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -17,11 +16,13 @@ class OrganizationService:
 
     async def search(
         self,
-        filter_: OrganizationFilter,
-        page: int = 1,
-        limit: int = 20,
-        sort: Optional[str] = None,
+        filter_: CombineOrgFilterPagination,
     ) -> dict:
+        
+        page = filter_.page
+        limit = filter_.limit
+        sort = filter_.sort
+        
         offset = (page - 1) * limit
 
         items, total = await self.repo.find_many(

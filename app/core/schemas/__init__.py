@@ -3,9 +3,10 @@ __all__ = [
     "ActivityShort",
     "BuildingShort",
     "OrganizationOut",
+    "CombineOrgFilterPagination"
 ]
 
 
 from .activity import ActivityShort
 from .building import BuildingShort
-from .organization import OrganizationFilter, OrganizationOut
+from .organization import OrganizationFilter, OrganizationOut, CombineOrgFilterPagination

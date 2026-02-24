@@ -78,6 +78,6 @@ class OrganizationRepository:
         result = await self.db.scalars(stmt)
         items = result.all() # List[Organization]
 
-        logging.info(f"Found {items} organizations (total: {total}) with filter: {filter_}")
+        logging.info(f"Found {(len(items))} organizations (total: {total}) with filter: {filter_}")
 
         return items, total

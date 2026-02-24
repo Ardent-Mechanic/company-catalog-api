@@ -29,6 +29,17 @@ class OrganizationFilter(BaseModel):
     min_lon: Optional[float] = None
     max_lon: Optional[float] = None
 
+class PaginationParams(BaseModel):
+    page: int = Field(1, ge=1)
+    limit: int = Field(20, ge=1, le=100)
+    sort: Optional[str] = Field(
+        None,
+        pattern=r"^(name|distance|rating|created_at)(:(asc|desc))?$"
+    )
+
+class CombineOrgFilterPagination(OrganizationFilter, PaginationParams):
+    pass
+
 class OrganizationOut(BaseModel):
     id: int
     name: str
