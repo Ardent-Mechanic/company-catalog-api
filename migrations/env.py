@@ -38,6 +38,23 @@ target_metadata = Base.metadata
 config.set_main_option("sqlalchemy.url", str(settings.db.url))
 
 
+def include_name(name, type_, parent_names):
+    # пропускаем все схемы кроме public
+    if type_ == "schema":
+        return name == "public"   # ← только public
+    return True
+
+def include_object(object, name, type_, reflected, compare_to):
+    # Игнорируем схемы PostGIS
+    if type_ == "table" and object.schema in ("topology", "tiger", "tiger_data"):
+        return False
+
+    # Игнорируем системную таблицу PostGIS
+    if type_ == "table" and name == "spatial_ref_sys":
+        return False
+
+    return True
+
 async def ensure_database_exists_async():
     from sqlalchemy.ext.asyncio import create_async_engine
 
@@ -75,6 +92,8 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        include_name=include_name,
+        include_object=include_object,
     )
 
     with context.begin_transaction():
@@ -82,7 +101,12 @@ def run_migrations_offline() -> None:
 
 
 def do_run_migrations(connection: Connection) -> None:
-    context.configure(connection=connection, target_metadata=target_metadata)
+    context.configure(
+    connection=connection,
+    target_metadata=target_metadata,
+    include_name=include_name,
+    include_object=include_object,
+    )  
 
     with context.begin_transaction():
         context.run_migrations()
