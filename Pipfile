@@ -11,6 +11,8 @@ asyncpg = "*"
 alembic = "*"
 uvicorn = "*"
 pydantic-settings = "*"
+geoalchemy2 = "*"
+shapely = "*"
 
 [dev-packages]
 pre-commit = "*"
