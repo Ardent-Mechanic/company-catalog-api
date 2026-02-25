@@ -81,3 +81,17 @@ class OrganizationRepository:
         logging.info(f"Found {(len(items))} organizations (total: {total}) with filter: {filter_}")
 
         return items, total
+    
+    async def find_by_id(self, org_id: int) -> Optional[Organization]:
+        stmt = (
+            select(Organization)
+            .options(
+                selectinload(Organization.activities),
+                selectinload(Organization.building),
+                selectinload(Organization.phone_numbers),
+            )
+            .where(Organization.id == org_id)
+        )
+
+        result = await self.db.scalar(stmt)
+        return result
