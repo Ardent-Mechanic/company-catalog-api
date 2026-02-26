@@ -46,7 +46,7 @@ class OrganizationOut(BaseModel):
     building: "BuildingShort"
     activities: List["ActivityShort"]
     phone_numbers: List[PhoneNumberOut]
-    distance_km: Optional[float] = None  # если искали по координатам
+    distance: Optional[float] = None  # если искали по координатам
     model_config = {
         "from_attributes": True,
         "extra": "ignore",

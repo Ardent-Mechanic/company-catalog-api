@@ -1,7 +1,7 @@
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Annotated, List
 
-from sqlalchemy import String, ForeignKey, Integer, Table, Column
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import String, ForeignKey, null
+from sqlalchemy.orm import Mapped, mapped_column, query_expression, relationship
 
 from app.core.models.base import Base
 
@@ -37,6 +37,9 @@ class PhoneNumber(Base):
         return f"PhoneNumber(id={self.id}, phone='{self.phone}')"
 
 
+# Добавляем типпизцию временного поля для хранения расстояния при поиске nearby
+Distance = Annotated[float | None, query_expression(default_expr=null())]
+
 class Organization(Base):
     """
     Организация (Organization)
@@ -48,6 +51,9 @@ class Organization(Base):
     building_id: Mapped[int] = mapped_column(ForeignKey("building.id", ondelete="RESTRICT"))
 
     building: Mapped["Building"] = relationship(back_populates="organizations")
+
+    distance: Mapped[Distance] = query_expression(default_expr=null())  # Временное поле для хранения расстояния при поиске nearby
+    
     phone_numbers: Mapped[List[PhoneNumber]] = relationship(
         back_populates="organization",
         cascade="all, delete-orphan"
