@@ -42,3 +42,27 @@ class OrganizationService:
         if not org:
             raise NotFoundError(f"Organization with id {org_id} not found")
         return OrganizationOut.model_validate(org)
+    
+    async def find_nearby(
+        self,
+        lat: float,
+        lon: float,
+        radius_km: float,
+        limit: int = 20
+    ) -> dict:
+        radius_meters = radius_km * 1000  # Конвертация в метры
+        orgs, total = await  self.repo.find_nearby( 
+            lat=lat,
+            lon=lon,
+            radius_meters=radius_meters,
+            limit=limit)
+
+
+        if not orgs:
+            raise NotFoundError(f"Organizations not found in radius {radius_km} km")
+
+        return {
+            "items": [OrganizationOut.model_validate(o) for o in orgs],
+            "total": total,
+        }
+    
