@@ -32,8 +32,8 @@ class Building(Base):
         nullable=False,
         index=True
     )
-    latitude: Mapped[float] = mapped_column(Float) # Обратная совместимость
-    longitude: Mapped[float] = mapped_column(Float) # Обратная совместимость
+    latitude: Mapped[float] = mapped_column(Float, nullable=True) # Обратная совместимость
+    longitude: Mapped[float] = mapped_column(Float, nullable=True) # Обратная совместимость
 
     organizations: Mapped[List["Organization"]] = relationship(back_populates="building", cascade="all, delete-orphan")
 
