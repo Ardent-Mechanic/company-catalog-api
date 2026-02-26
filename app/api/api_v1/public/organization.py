@@ -19,6 +19,21 @@ async def search_organizations(
     )
 
 
+@router.get("/nearby", response_model=dict)
+async def find_nearby(
+    lat: float = Query(..., description="Широта"),
+    lon: float = Query(..., description="Долгота"),
+    radius_km: float = Query(..., description="Радиус в километрах"),
+    limit: int = 20,
+    service: OrganizationService = Depends(),
+):
+    return await service.find_nearby(
+        lat=lat,
+        lon=lon,
+        radius_km=radius_km,
+        limit=limit
+    )
+
 
 @router.get("/{org_id}", response_model=OrganizationOut)
 async def search_by_id(
