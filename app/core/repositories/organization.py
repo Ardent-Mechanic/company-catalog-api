@@ -1,10 +1,12 @@
 import logging
 
+from geoalchemy2 import Geography
 from sqlalchemy import Tuple, func, select, and_, or_
-from sqlalchemy.orm import Session, selectinload
-from typing import Optional, List, Sequence, Sequence
+from sqlalchemy.orm import Session, selectinload, with_expression
+from typing import Optional, Sequence, Sequence
+from geoalchemy2.functions import ST_DWithin, ST_Distance
 
-from app.core.models import Organization, Activity, Building, PhoneNumber
+from app.core.models import Organization, Activity, Building
 from app.core.schemas import OrganizationFilter
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -66,7 +68,7 @@ class OrganizationRepository:
         # Сортировка
         if sort_by == "name":
             stmt = stmt.order_by(Organization.name.asc())
-        # elif sort_by == "distance":  # позже добавим haversine или PostGIS
+        # elif sort_by == "distance":
 
         # Подсчёт общего количества 
         count_stmt = select(func.count()).select_from(stmt.subquery())
@@ -95,3 +97,40 @@ class OrganizationRepository:
 
         result = await self.db.scalar(stmt)
         return result
+    
+
+    async def find_nearby(
+        self,
+        lat: float,
+        lon: float,
+        radius_meters: float = 100,
+        limit: int = 20,
+    ) -> tuple[Sequence[Organization], int]:
+        point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
+
+        distance_expr = ST_Distance(
+            Building.geom,
+            point.cast(Geography)
+        ).label("distance")
+
+        stmt = (
+            select(Organization)
+            .join(Building)
+            .where(ST_DWithin(Building.geom, point, radius_meters))
+            .options(
+                selectinload(Organization.activities),
+                selectinload(Organization.building),
+                selectinload(Organization.phone_numbers),
+                # добавляем в запрос выражение для расстояния, чтобы оно было доступно в результатах
+                with_expression(Organization.distance, distance_expr)
+            )
+            .order_by(distance_expr)
+            .limit(limit)
+        )
+
+        result = await self.db.scalars(stmt)
+        organizations = result.all()
+
+        # Теперь у каждого объекта уже есть .distance
+        # и это настоящие экземпляры Organization
+        return organizations, len(organizations)
