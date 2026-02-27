@@ -97,6 +97,22 @@ class OrganizationRepository:
 
         result = await self.db.scalar(stmt)
         return result
+    
+    async def find_by_name(self, name: str) -> tuple[Sequence[Organization], int]:
+        stmt = (
+            select(Organization)
+            .options(
+                selectinload(Organization.activities),
+                selectinload(Organization.building),
+                selectinload(Organization.phone_numbers),
+            )
+            .where(Organization.name.ilike(f"%{name}%"))
+        )
+
+        result = await self.db.scalars(stmt)
+        items = result.all()
+        return items, len(items)
+
 
     async def find_nearby(
         self,

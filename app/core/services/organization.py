@@ -45,6 +45,18 @@ class OrganizationService:
             raise NotFoundError(f"Organization with id {org_id} not found")
         return OrganizationOut.model_validate(org)
     
+
+    async def find_by_name(self, name: str) -> dict:
+        orgs, total = await self.repo.find_by_name(name)
+        if not orgs:
+            raise NotFoundError(f"Organization with name '{name}' not found")
+    
+        return {
+            "items": [OrganizationOut.model_validate(o) for o in orgs],
+            "total": total,
+        }
+    
+
     async def find_nearby(
         self,
         lat: float,

@@ -53,6 +53,14 @@ async def find_in_square(
     )
 
 
+@router.get("/name/{name}", response_model=dict)
+async def search_by_name(
+    name: str = Path(..., description="Имя организации"),
+    service: OrganizationService = Depends(),
+):
+    return await service.find_by_name(name)
+
+
 @router.get("/{org_id}", response_model=OrganizationOut)
 async def search_by_id(
     org_id: int = Path(...),
