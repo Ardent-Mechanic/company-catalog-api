@@ -4,7 +4,7 @@ from geoalchemy2 import Geography
 from sqlalchemy import Tuple, func, select, and_, or_
 from sqlalchemy.orm import Session, selectinload, with_expression
 from typing import Optional, Sequence, Sequence
-from geoalchemy2.functions import ST_DWithin, ST_Distance
+from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakeEnvelope, ST_Within, ST_Within
 
 from app.core.models import Organization, Activity, Building
 from app.core.schemas import OrganizationFilter
@@ -97,7 +97,6 @@ class OrganizationRepository:
 
         result = await self.db.scalar(stmt)
         return result
-    
 
     async def find_nearby(
         self,
@@ -133,4 +132,32 @@ class OrganizationRepository:
 
         # Теперь у каждого объекта уже есть .distance
         # и это настоящие экземпляры Organization
+        return organizations, len(organizations)
+    
+    async def find_in_square(
+        self,
+        lat1: float,
+        lon1: float,
+        lat2: float,
+        lon2: float,
+        limit: int = 20,
+    ) -> tuple[Sequence[Organization], int]:
+        stmt = (
+            select(Organization)
+            .join(Building, Organization.building_id == Building.id)
+            .where(
+                # ST_Within проверяет, находится ли точка внутри прямоугольника
+                # Или используем && (пересечение bounding box) для индекса
+                Building.geom.bool_op('&&')(func.ST_SetSRID(func.ST_MakeEnvelope(lon1, lat1, lon2, lat2), 4326))
+            )
+            .options(
+                selectinload(Organization.activities),
+                selectinload(Organization.building),
+                selectinload(Organization.phone_numbers),
+            )
+            .limit(limit)
+        )
+
+        result = await self.db.scalars(stmt)
+        organizations = result.all()
         return organizations, len(organizations)

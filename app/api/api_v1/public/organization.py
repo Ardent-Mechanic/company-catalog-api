@@ -35,6 +35,24 @@ async def find_nearby(
     )
 
 
+@router.get("/in_square", response_model=dict)
+async def find_in_square(
+    lat1: float = Query(..., description="Широта верхнего левого угла"),
+    lon1: float = Query(..., description="Долгота верхнего левого угла"),
+    lat2: float = Query(..., description="Широта нижнего правого угла"),
+    lon2: float = Query(..., description="Долгота нижнего правого угла"),
+    limit: int = 20,
+    service: OrganizationService = Depends(),
+):
+    return await service.find_in_square(
+        lat1=lat1,
+        lon1=lon1,
+        lat2=lat2,
+        lon2=lon2,
+        limit=limit
+    )
+
+
 @router.get("/{org_id}", response_model=OrganizationOut)
 async def search_by_id(
     org_id: int = Path(...),

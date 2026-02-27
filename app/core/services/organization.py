@@ -1,4 +1,5 @@
 from typing import Optional
+from unicodedata import name
 
 from fastapi import Depends
 from app.core.db.session import db_session
@@ -36,7 +37,8 @@ class OrganizationService:
             "page": page,
             "pages": (total + limit - 1) // limit if total else 0,
         }
-    
+
+
     async def search_by_id(self, org_id: int) -> OrganizationOut:
         org = await self.repo.find_by_id(org_id)
         if not org:
@@ -66,3 +68,27 @@ class OrganizationService:
             "total": total,
         }
     
+
+    async def find_in_square(
+        self,
+        lat1: float,
+        lon1: float,
+        lat2: float,
+        lon2: float,
+        limit: int = 20
+    ) -> dict:
+        orgs, total = await self.repo.find_in_square(
+            lat1=lat1,
+            lon1=lon1,
+            lat2=lat2,
+            lon2=lon2,
+            limit=limit
+        )
+
+        if not orgs:
+            raise NotFoundError(f"Organizations not found in the specified square")
+
+        return {
+            "items": [OrganizationOut.model_validate(o) for o in orgs],
+            "total": total,
+        }
