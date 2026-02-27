@@ -5,7 +5,7 @@ class ActivityShort(BaseModel):
     id: int
     name: str
     # можно добавить parent_id
-    
+
     model_config = {
         "from_attributes": True,
         "extra": "ignore",

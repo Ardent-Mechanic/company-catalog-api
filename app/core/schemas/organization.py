@@ -1,6 +1,14 @@
-from typing import List, Optional
+# from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional
 
 from pydantic import BaseModel, Field
+
+if TYPE_CHECKING:
+    # Импорты только для type hints, не выполняются при импорте модуля
+    from .activity import ActivityShort
+    from .building import BuildingShort
+
 
 class PhoneNumberOut(BaseModel):
     phone: str
@@ -10,6 +18,7 @@ class PhoneNumberOut(BaseModel):
         "extra": "ignore",
         # "arbitrary_types_allowed": True # если есть кастомные типы
     }
+
 
 class OrganizationFilter(BaseModel):
     # Текстовый поиск (по названию, описанию)
@@ -29,16 +38,16 @@ class OrganizationFilter(BaseModel):
     min_lon: Optional[float] = None
     max_lon: Optional[float] = None
 
+
 class PaginationParams(BaseModel):
     page: int = Field(1, ge=1)
     limit: int = Field(20, ge=1, le=100)
-    sort: Optional[str] = Field(
-        None,
-        pattern=r"^(name|distance|rating|created_at)(:(asc|desc))?$"
-    )
+    sort: Optional[str] = Field(None, pattern=r"^(name|distance|rating|created_at)(:(asc|desc))?$")
+
 
 class CombineOrgFilterPagination(OrganizationFilter, PaginationParams):
     pass
+
 
 class OrganizationOut(BaseModel):
     id: int
@@ -53,9 +62,6 @@ class OrganizationOut(BaseModel):
         # "arbitrary_types_allowed": True # если есть кастомные типы
     }
 
-# Импортируем внизу, чтобы не было циклов
-from .building import BuildingShort
-from .activity import ActivityShort
 
-# После того как все классы импортированы, Pydantic пересобирает модели
-OrganizationOut.model_rebuild()
+# # После того как все классы импортированы, Pydantic пересобирает модели
+# OrganizationOut.model_rebuild()

@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -6,6 +7,7 @@ from fastapi.responses import JSONResponse
 from app.core.exceptions.base import ApiException
 
 logger = logging.getLogger("api")
+
 
 async def api_exception_handler(
     request: Request,
@@ -41,6 +43,7 @@ async def api_exception_handler(
         headers=exc.headers,
     )
 
+
 async def validation_exception_handler(
     request: Request,
     exc: RequestValidationError,
@@ -62,6 +65,7 @@ async def validation_exception_handler(
         status_code=422,
         content={"detail": exc.errors()},
     )
+
 
 async def unhandled_exception_handler(
     request: Request,

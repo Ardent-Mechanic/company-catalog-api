@@ -1,15 +1,15 @@
 import logging
+from typing import Optional, Sequence
 
 from geoalchemy2 import Geography
-from sqlalchemy import Tuple, func, select, and_, or_
-from sqlalchemy.orm import Session, selectinload, with_expression
-from typing import Optional, Sequence, Sequence
-from geoalchemy2.functions import ST_DWithin, ST_Distance, ST_MakeEnvelope, ST_Within, ST_Within
+from geoalchemy2.functions import ST_Distance, ST_DWithin
+from sqlalchemy import and_, func, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload, with_expression
 
-from app.core.models import Organization, Activity, Building
+from app.core.models import Activity, Building, Organization
 from app.core.schemas import OrganizationFilter
 
-from sqlalchemy.ext.asyncio import AsyncSession
 
 class OrganizationRepository:
     def __init__(self, db: AsyncSession):
@@ -40,9 +40,7 @@ class OrganizationRepository:
             where_clauses.append(Organization.name.ilike(f"%{filter_.q}%"))
 
         if filter_.activity_id:
-            where_clauses.append(
-                Organization.activities.any(Activity.id == filter_.activity_id)
-            )
+            where_clauses.append(Organization.activities.any(Activity.id == filter_.activity_id))
 
         if filter_.activity_ids:
             where_clauses.append(
@@ -70,7 +68,7 @@ class OrganizationRepository:
             stmt = stmt.order_by(Organization.name.asc())
         # elif sort_by == "distance":
 
-        # Подсчёт общего количества 
+        # Подсчёт общего количества
         count_stmt = select(func.count()).select_from(stmt.subquery())
         total = await self.db.scalar(count_stmt) or 0
 
@@ -78,12 +76,12 @@ class OrganizationRepository:
         stmt = stmt.offset(offset).limit(limit)
 
         result = await self.db.scalars(stmt)
-        items = result.all() # List[Organization]
+        items = result.all()  # List[Organization]
 
         logging.info(f"Found {(len(items))} organizations (total: {total}) with filter: {filter_}")
 
         return items, total
-    
+
     async def find_by_id(self, org_id: int) -> Optional[Organization]:
         stmt = (
             select(Organization)
@@ -97,7 +95,7 @@ class OrganizationRepository:
 
         result = await self.db.scalar(stmt)
         return result
-    
+
     async def find_by_name(self, name: str) -> tuple[Sequence[Organization], int]:
         stmt = (
             select(Organization)
@@ -112,7 +110,6 @@ class OrganizationRepository:
         result = await self.db.scalars(stmt)
         items = result.all()
         return items, len(items)
-    
 
     async def find_by_activity(self, activity_name: str) -> tuple[Sequence[Organization], int]:
         stmt = (
@@ -130,19 +127,17 @@ class OrganizationRepository:
         items = result.all()
         return items, len(items)
 
-
-    async def find_by_activity_depth(self, activity_name: str) -> tuple[Sequence[Organization], int]:
+    async def find_by_activity_depth(
+        self, activity_name: str
+    ) -> tuple[Sequence[Organization], int]:
         cte = (
-        select(Activity.id)
-        .where(Activity.name.ilike(f"%{activity_name}%"))
-        .cte(recursive=True, name="activity_tree")
-    )
-        # Рекурсивная часть
-        cte = cte.union(
             select(Activity.id)
-            .where(Activity.parent_id == cte.c.id)
+            .where(Activity.name.ilike(f"%{activity_name}%"))
+            .cte(recursive=True, name="activity_tree")
         )
-        
+        # Рекурсивная часть
+        cte = cte.union(select(Activity.id).where(Activity.parent_id == cte.c.id))
+
         # Основной запрос организации по id из CTE
         stmt = (
             select(Organization)
@@ -155,11 +150,10 @@ class OrganizationRepository:
             .where(Activity.id.in_(select(cte.c.id)))
             .distinct()
         )
-        
+
         result = await self.db.scalars(stmt)
         items = result.all()
         return items, len(items)
-
 
     async def find_nearby(
         self,
@@ -170,10 +164,7 @@ class OrganizationRepository:
     ) -> tuple[Sequence[Organization], int]:
         point = func.ST_SetSRID(func.ST_MakePoint(lon, lat), 4326)
 
-        distance_expr = ST_Distance(
-            Building.geom,
-            point.cast(Geography)
-        ).label("distance")
+        distance_expr = ST_Distance(Building.geom, point.cast(Geography)).label("distance")
 
         stmt = (
             select(Organization)
@@ -183,8 +174,8 @@ class OrganizationRepository:
                 selectinload(Organization.activities),
                 selectinload(Organization.building),
                 selectinload(Organization.phone_numbers),
-                # добавляем в запрос выражение для расстояния, чтобы оно было доступно в результатах
-                with_expression(Organization.distance, distance_expr)
+                # добавляем в запрос расстояние, чтобы оно было доступно в результатах
+                with_expression(Organization.distance, distance_expr),
             )
             .order_by(distance_expr)
             .limit(limit)
@@ -196,7 +187,7 @@ class OrganizationRepository:
         # Теперь у каждого объекта уже есть .distance
         # и это настоящие экземпляры Organization
         return organizations, len(organizations)
-    
+
     async def find_in_square(
         self,
         lat1: float,
@@ -211,7 +202,9 @@ class OrganizationRepository:
             .where(
                 # ST_Within проверяет, находится ли точка внутри прямоугольника
                 # Или используем && (пересечение bounding box) для индекса
-                Building.geom.bool_op('&&')(func.ST_SetSRID(func.ST_MakeEnvelope(lon1, lat1, lon2, lat2), 4326))
+                Building.geom.bool_op("&&")(
+                    func.ST_SetSRID(func.ST_MakeEnvelope(lon1, lat1, lon2, lat2), 4326)
+                )
             )
             .options(
                 selectinload(Organization.activities),

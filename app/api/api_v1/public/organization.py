@@ -1,13 +1,13 @@
-from typing import Annotated, Annotated
+from typing import Annotated
 
 from fastapi import APIRouter, Depends, Path, Query
-from app.core.config import settings
+
 from app.core.schemas import CombineOrgFilterPagination
 from app.core.schemas.organization import OrganizationOut
 from app.core.services import OrganizationService
 
-
 router = APIRouter(tags=["Organizations"])
+
 
 @router.get("/search", response_model=dict)
 async def search_organizations(
@@ -27,12 +27,7 @@ async def find_nearby(
     limit: int = 20,
     service: OrganizationService = Depends(),
 ):
-    return await service.find_nearby(
-        lat=lat,
-        lon=lon,
-        radius_km=radius_km,
-        limit=limit
-    )
+    return await service.find_nearby(lat=lat, lon=lon, radius_km=radius_km, limit=limit)
 
 
 @router.get("/in_square", response_model=dict)
@@ -44,13 +39,7 @@ async def find_in_square(
     limit: int = 20,
     service: OrganizationService = Depends(),
 ):
-    return await service.find_in_square(
-        lat1=lat1,
-        lon1=lon1,
-        lat2=lat2,
-        lon2=lon2,
-        limit=limit
-    )
+    return await service.find_in_square(lat1=lat1, lon1=lon1, lat2=lat2, lon2=lon2, limit=limit)
 
 
 @router.get("/activity/{activity_name}", response_model=dict)
@@ -67,6 +56,7 @@ async def find_by_activity_depth(
     service: OrganizationService = Depends(),
 ):
     return await service.find_by_activity_depth(activity_name)
+
 
 @router.get("/name/{name}", response_model=dict)
 async def search_by_name(

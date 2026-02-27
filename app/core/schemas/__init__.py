@@ -1,3 +1,13 @@
+
+
+
+from .activity import ActivityShort
+from .building import BuildingShort
+from .organization import OrganizationFilter, OrganizationOut, CombineOrgFilterPagination
+
+OrganizationOut.model_rebuild()
+
+
 __all__ = [
     "OrganizationFilter",
     "ActivityShort",
@@ -5,8 +15,3 @@ __all__ = [
     "OrganizationOut",
     "CombineOrgFilterPagination"
 ]
-
-
-from .activity import ActivityShort
-from .building import BuildingShort
-from .organization import OrganizationFilter, OrganizationOut, CombineOrgFilterPagination

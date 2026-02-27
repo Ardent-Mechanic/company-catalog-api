@@ -3,7 +3,7 @@ from typing import Any, Optional
 
 class ApiException(Exception):
     __slots__ = ("status_code", "detail", "headers", "error_code", "data")
-    
+
     def __init__(
         self,
         *,
@@ -28,10 +28,9 @@ class ApiException(Exception):
         )
 
     def to_dict(self) -> dict[str, Any]:
-        response = {"detail": self.detail, "data": {}} 
+        response = {"detail": self.detail, "data": {}}
         if self.error_code:
             response["error_code"] = self.error_code
         if self.data:
             response["data"] = self.data
         return response
-    
