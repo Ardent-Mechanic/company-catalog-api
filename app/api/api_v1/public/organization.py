@@ -53,6 +53,21 @@ async def find_in_square(
     )
 
 
+@router.get("/activity/{activity_name}", response_model=dict)
+async def find_by_activity(
+    activity_name: str = Path(..., description="Название деятельности"),
+    service: OrganizationService = Depends(),
+):
+    return await service.find_by_activity(activity_name)
+
+
+@router.get("/activity/depth/{activity_name}", response_model=dict)
+async def find_by_activity_depth(
+    activity_name: str = Path(..., description="Название деятельности"),
+    service: OrganizationService = Depends(),
+):
+    return await service.find_by_activity_depth(activity_name)
+
 @router.get("/name/{name}", response_model=dict)
 async def search_by_name(
     name: str = Path(..., description="Имя организации"),

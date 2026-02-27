@@ -55,7 +55,29 @@ class OrganizationService:
             "items": [OrganizationOut.model_validate(o) for o in orgs],
             "total": total,
         }
+
     
+    async def find_by_activity(self, activity_name: str) -> dict:
+        orgs, total = await self.repo.find_by_activity(activity_name)
+        if not orgs:
+            raise NotFoundError(f"Organization with activity name '{activity_name}' not found")
+    
+        return {
+            "items": [OrganizationOut.model_validate(o) for o in orgs],
+            "total": total,
+        }
+
+
+    async def find_by_activity_depth(self, activity_name: str) -> dict:
+        orgs, total = await self.repo.find_by_activity_depth(activity_name)
+        if not orgs:
+            raise NotFoundError(f"Organization with activity name '{activity_name}' not found")
+    
+        return {
+            "items": [OrganizationOut.model_validate(o) for o in orgs],
+            "total": total,
+        }
+
 
     async def find_nearby(
         self,

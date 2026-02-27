@@ -112,6 +112,53 @@ class OrganizationRepository:
         result = await self.db.scalars(stmt)
         items = result.all()
         return items, len(items)
+    
+
+    async def find_by_activity(self, activity_name: str) -> tuple[Sequence[Organization], int]:
+        stmt = (
+            select(Organization)
+            .join(Organization.activities)
+            .options(
+                selectinload(Organization.activities),
+                selectinload(Organization.building),
+                selectinload(Organization.phone_numbers),
+            )
+            .where(Activity.name.ilike(f"%{activity_name}%"))
+        )
+
+        result = await self.db.scalars(stmt)
+        items = result.all()
+        return items, len(items)
+
+
+    async def find_by_activity_depth(self, activity_name: str) -> tuple[Sequence[Organization], int]:
+        cte = (
+        select(Activity.id)
+        .where(Activity.name.ilike(f"%{activity_name}%"))
+        .cte(recursive=True, name="activity_tree")
+    )
+        # Рекурсивная часть
+        cte = cte.union(
+            select(Activity.id)
+            .where(Activity.parent_id == cte.c.id)
+        )
+        
+        # Основной запрос организации по id из CTE
+        stmt = (
+            select(Organization)
+            .join(Organization.activities)
+            .options(
+                selectinload(Organization.activities),
+                selectinload(Organization.building),
+                selectinload(Organization.phone_numbers),
+            )
+            .where(Activity.id.in_(select(cte.c.id)))
+            .distinct()
+        )
+        
+        result = await self.db.scalars(stmt)
+        items = result.all()
+        return items, len(items)
 
 
     async def find_nearby(
