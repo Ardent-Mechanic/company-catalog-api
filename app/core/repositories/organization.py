@@ -5,7 +5,7 @@ from geoalchemy2 import Geography
 from geoalchemy2.functions import ST_Distance, ST_DWithin
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload, with_expression
+from sqlalchemy.orm import contains_eager, selectinload, with_expression
 
 from app.core.models import Activity, Building, Organization
 from app.core.schemas import OrganizationFilter
@@ -14,7 +14,8 @@ from app.core.schemas import OrganizationFilter
 class OrganizationRepository:
     def __init__(self, db: AsyncSession):
         self.db = db
-
+    
+    # старый запрос нужно переделать или удалить
     async def find_many(
         self,
         filter_: OrganizationFilter,
@@ -171,8 +172,8 @@ class OrganizationRepository:
             .join(Building)
             .where(ST_DWithin(Building.geom, point, radius_meters))
             .options(
+                contains_eager(Organization.building),
                 selectinload(Organization.activities),
-                selectinload(Organization.building),
                 selectinload(Organization.phone_numbers),
                 # добавляем в запрос расстояние, чтобы оно было доступно в результатах
                 with_expression(Organization.distance, distance_expr),

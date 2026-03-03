@@ -4,8 +4,8 @@ from pydantic import BaseModel
 class BuildingShort(BaseModel):
     id: int
     address: str
-    # latitude и longitude можно не отдавать, если не нужны
-    # или добавить distance_km отдельно в OrganizationOut
+    latitude: float
+    longitude: float
 
     model_config = {
         "from_attributes": True,
