@@ -1,18 +1,19 @@
-"""init tables
+"""init db
 
-Revision ID: 1fe7879d23ef
-Revises:
-Create Date: 2026-02-14 20:45:03.033764
+Revision ID: 69d463712ba9
+Revises: 4bd966d063c2
+Create Date: 2026-02-25 15:36:24.763082
 Confirmed by: Green <test@example.com>
 """
 
 from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
+import geoalchemy2
 import logging
 
-revision: str = "1fe7879d23ef"
-down_revision: Union[str, Sequence[str], None] = None
+revision: str = "69d463712ba9"
+down_revision: Union[str, Sequence[str], None] = "4bd966d063c2"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -24,9 +25,8 @@ def upgrade() -> None:
         f"=== APPLYING MIGRATION === | "
         f"Revision: {revision} | "
         f"Down: {down_revision} | "
-        f"Message: init tables"
+        f"Message: init db"
     )
-
     op.create_table(
         "activity",
         sa.Column("id", sa.Integer(), nullable=False),
@@ -46,10 +46,26 @@ def upgrade() -> None:
         "building",
         sa.Column("id", sa.Integer(), nullable=False),
         sa.Column("address", sa.String(length=255), nullable=False),
+        sa.Column(
+            "geom",
+            geoalchemy2.types.Geography(
+                geometry_type="POINT",
+                srid=4326,
+                dimension=2,
+                spatial_index=False,
+                from_text="ST_GeogFromText",
+                name="geography",
+                nullable=False,
+            ),
+            nullable=False,
+        ),
         sa.Column("latitude", sa.Float(), nullable=False),
         sa.Column("longitude", sa.Float(), nullable=False),
         sa.PrimaryKeyConstraint("id", name=op.f("pk_building")),
         sa.UniqueConstraint("address", name=op.f("uq_building_address")),
+    )
+    op.create_index(
+        op.f("ix_building_geom"), "building", ["geom"], unique=False
     )
     op.create_index(op.f("ix_building_id"), "building", ["id"], unique=False)
     op.create_table(
@@ -110,13 +126,13 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     logger.warning(f"=== REVERTING MIGRATION === | " f"Revision: {revision}")
-
     op.drop_index(op.f("ix_phone_number_id"), table_name="phone_number")
     op.drop_table("phone_number")
     op.drop_table("organization_activity")
     op.drop_index(op.f("ix_organization_id"), table_name="organization")
     op.drop_table("organization")
     op.drop_index(op.f("ix_building_id"), table_name="building")
+    op.drop_index(op.f("ix_building_geom"), table_name="building")
     op.drop_table("building")
     op.drop_index(op.f("ix_activity_id"), table_name="activity")
     op.drop_table("activity")

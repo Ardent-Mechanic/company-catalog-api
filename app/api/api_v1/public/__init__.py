@@ -1,9 +1,11 @@
 from fastapi import APIRouter
 
-from .building import router as user_router
+from .organization import router as organization_router
+from .activity import router as activity_router
 from app.core.config import settings
 
 router = APIRouter()
 
 # all public routers
-router.include_router(user_router, prefix=settings.api.v1.building)
+router.include_router(organization_router, prefix=settings.api.v1.organizations)
+router.include_router(activity_router, prefix=settings.api.v1.activities)
